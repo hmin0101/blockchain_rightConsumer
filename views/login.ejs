@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Login</title>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+
+    <!--  Bootstrap 4.3.1  -->
+    <link rel="stylesheet" href="/stylesheets/bootstrap-4.3.1.min.css">
+    <!--  Custom CSS  -->
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+
+    <style>
+      body {
+        user-select: none;
+      }
+
+      .form-login {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 3px rgba(0, 0, 0, 0.2);
+      }
+      .login-logo {
+        font-size: 83px;
+        font-weight: 300;
+        letter-spacing: -4px;
+      }
+    </style>
+  </head>
+  <body>
+    <section>
+      <div class="container">
+        <div class="row align-items-center justify-content-center min-vh-100">
+          <div class="col-lg-4 p-5 form-login">
+            <div class="text-center">
+              <h3 class="login-logo mb-2 main-color-3-f">Login</h3>
+              <p class="mb-5 main-color-3-f">Sign in to your account to continue.</p>
+            </div>
+            <div class="form-group">
+              <label class="input-label" for="input-id">User ID</label>
+              <input class="input-basic" id="input-id" placeholder="name@example.com" />
+            </div>
+            <div class="form-group">
+              <label class="input-label" for="input-pw">Password</label>
+              <input class="input-basic" id="input-pw" placeholder="Input Password" />
+            </div>
+            <div class="form-group">
+              <button class="btn btn-block btn-basic" id="btn-signin">Sign in</button>
+            </div>
+            <div class="text-center">
+              <a class="btn-link" id="btn-signup" href="/register">create account</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
