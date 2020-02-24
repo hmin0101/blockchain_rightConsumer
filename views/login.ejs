@@ -37,14 +37,14 @@
             </div>
             <div class="form-group">
               <label class="input-label" for="input-id">User ID</label>
-              <input class="input-basic" id="input-id" placeholder="name@example.com" />
+              <input class="input-basic" id="input-id" placeholder="Input User Id" />
             </div>
             <div class="form-group">
               <label class="input-label" for="input-pw">Password</label>
-              <input class="input-basic" id="input-pw" placeholder="Input Password" />
+              <input class="input-basic" id="input-pw" type="password" placeholder="Input Password" />
             </div>
             <div class="form-group">
-              <button class="btn btn-block btn-basic" id="btn-signin">Sign in</button>
+              <button class="btn btn-block btn-basic" id="btn-login">Sign in</button>
             </div>
             <div class="text-center">
               <a class="btn-link" id="btn-signup" href="/register">create account</a>
@@ -53,5 +53,50 @@
         </div>
       </div>
     </section>
+
+    <!--  JQuery  -->
+    <script src="/javascripts/jquery-1.12.4.min.js"></script>
+    <!--  Bootstrap 4.3.1 JS  -->
+    <script src="/javascripts/bootstrap-4.3.1.min.js"></script>
+    <script>
+      $(document).ready(function() {
+        // Login button click event
+        $('#btn-login').on('click', function() {
+          const info = {
+            id: $('#input-id').val(),
+            pw: $('#input-pw').val()
+          };
+
+          if (blankCheck(info.id)) {
+            alert("아이디를 입력해주세요.");
+            $('#input-id').focus();
+          } else if (blankCheck(info.pw)) {
+            alert("비밀번호를 입력해주세요.");
+            $('#input-pw').focus();
+          } else {
+            $.ajax({
+              type: "POST",
+              url: "/login",
+              data: "info="+JSON.stringify(info),
+              success: function(res) {
+                if (res.result) {
+                  location.href = "/home";
+                } else {
+                  alert(res.message);
+                  $('#input-id').val('').focus();
+                  $('#input-pw').val('');
+                }
+              }
+            });
+          }
+        });
+      });
+
+      function blankCheck(value) {
+        if (value === '' || value === null || value === undefined) return true;
+        const blankPattern = /^\s+|\s+$/g;
+        return value.replace(blankPattern, "") === "";
+      }
+    </script>
   </body>
 </html>

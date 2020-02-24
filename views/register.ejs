@@ -19,26 +19,6 @@
         font-weight: 300;
         letter-spacing: -5px;
       }
-
-      .form-agreement {
-        max-height: 200px;
-        padding: 12px 20px;
-        background-color: #f2f9fa;
-        border: 1px solid #e7eaec;
-        border-radius: 5px;
-        font-size: 13px;
-        overflow-y: auto;
-      }
-      .form-agreement::-webkit-scrollbar {
-        width: 6px;
-      }
-      .form-agreement::-webkit-scrollbar-track {
-        background: #f1f3f1;
-      }
-      .form-agreement::-webkit-scrollbar-thumb {
-        background: #34558B;
-        border-radius: 3px;
-      }
     </style>
   </head>
   <body>
@@ -52,7 +32,14 @@
             </div>
             <div class="form-group">
               <label class="input-label" for="input-id">User ID</label>
-              <input class="input-basic" id="input-id" placeholder="name@example.com" />
+              <div class="input-group">
+                <input class="input-basic" id="input-id" placeholder="Input User ID" />
+                <div class="input-group-append"><span id="btn-check">중복 확인</span></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="input-label" for="input-name">Your Name</label>
+              <input class="input-basic" type="text" id="input-name" placeholder="Input Your Name" />
             </div>
             <div class="form-group">
               <label class="input-label" for="input-pw">Password</label>
@@ -63,8 +50,7 @@
               <input class="input-basic" type="password" id="input-pw-c" placeholder="Input Password" />
             </div>
             <div class="form-group">
-              <button class="btn btn-block btn-basic" id="btn-sign">Agree Sign</button>
-              <button class="btn btn-block btn-basic" id="btn-register">Register</button>
+              <button class="btn btn-block btn-basic" id="btn-next">Next</button>
             </div>
             <div class="text-center">
               <a class="btn-link" id="btn-signin" href="/login">sign in</a>
@@ -80,9 +66,39 @@
     <script src="/javascripts/bootstrap-4.3.1.min.js"></script>
     <script>
       $(document).ready(function() {
-        // Register button click event
-        $('#btn-register').on('click', function() {
-          const data = {
+        // Duplication step
+        let checkDuplication = false;
+
+        // Check duplication
+        $('#btn-check').on('click', function() {
+          const userId = $('#input-id').val();
+          if (blankCheck(userId)) {
+            alert("아이디를 입력해 주세요.");
+            $('#input-id').focus();
+          } else {
+            $.ajax({
+              type: "POST",
+              url: "/check/duplication",
+              data: "userId="+userId,
+              success: function(res) {
+                if (res.result) {
+                  checkDuplication = true;
+                }
+                alert(res.message);
+              }
+            });
+          }
+        });
+
+        // Change ID
+        $('#input-id').on('click', function() {
+          checkDuplication = false;
+        });
+
+        // Next button click event
+        $('#btn-next').on('click', function() {
+          const info = {
+            name: $('#input-name').val(),
             id: $('#input-id').val(),
             pw: $('#input-pw').val(),
             agreement: {
@@ -93,25 +109,46 @@
           }
 
           // Confirm
-          if (!blankCheck(data.id)) {
+          if (blankCheck(info.id)) {
             alert("아이디를 입력해주세요.");
-          } else if (!blankCheck(data.pw)) {
+            $('#input-id').focus();
+          } else if (!checkDuplication) {
+            alert("아이디 중복 확인을 해주세요.");
+          } else if (blankCheck(info.name)) {
+            alert("이름을 입력해주세요.");
+            $('#input-name').focus();
+          } else if (blankCheck(info.pw)) {
             alert("비밀번호를 입력해주세요.");
-          } else if (!blankCheck($('#input-pw-c').val())) {
+            $('#input-pw').focus();
+          } else if (blankCheck($('#input-pw-c').val())) {
             alert("비밀번호 확인을 입력해주세요.");
-          } else if (data.pw !== $('#input-pw-c').val()) {
+            $('#input-pw-c').focus();
+          } else if (info.pw !== $('#input-pw-c').val()) {
             alert("비밀번호가 일치하지 않습니다.");
+            $('#input-pw-c').val('');
+            $('#input-pw-c').focus();
           } else {
-            alert("회원가입 완료");
-            location.href = "/login";
+            $.ajax({
+              type: "POST",
+              url: "/register/info",
+              data: "info="+JSON.stringify(info),
+              success: function(res) {
+                if (res.result) {
+                  checkDuplication = false;
+                  location.href = "/register/step2";
+                } else {
+                  alert(res.message);
+                }
+              }
+            });
           }
         });
       });
 
       function blankCheck(value) {
-        if (value === '' || value === null || value === undefined) return false;
+        if (value === '' || value === null || value === undefined) return true;
         const blankPattern = /^\s+|\s+$/g;
-        return value.replace(blankPattern, "") !== "";
+        return value.replace(blankPattern, "") === "";
       }
     </script>
   </body>

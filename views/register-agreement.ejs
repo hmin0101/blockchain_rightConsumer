@@ -81,10 +81,10 @@
             </div>
             <div class="row form-group">
               <div class="col-lg-6">
-                <button class="btn btn-block btn-basic" data-toggle="modal" data-target="#modal-sign">Agreement sign</button>
+                <button class="btn btn-block btn-basic" data-toggle="modal" data-target="#modal-sign">Agreement Sign</button>
               </div>
               <div class="col-lg-6">
-                <button class="btn btn-block btn-basic" id="btn-next">Next</button>
+                <button class="btn btn-block btn-basic" id="btn-register">Register</button>
               </div>
             </div>
             <div class="text-center">
@@ -94,6 +94,26 @@
         </div>
       </div>
     </section>
+
+    <div class="hidden loading-cover">
+      <span class="loading-message">Pair Key 생성 중입니다.</span>
+      <div class="spiner-example">
+        <div class="sk-spinner sk-spinner-fading-circle">
+          <div class="sk-circle1 sk-circle"></div>
+          <div class="sk-circle2 sk-circle"></div>
+          <div class="sk-circle3 sk-circle"></div>
+          <div class="sk-circle4 sk-circle"></div>
+          <div class="sk-circle5 sk-circle"></div>
+          <div class="sk-circle6 sk-circle"></div>
+          <div class="sk-circle7 sk-circle"></div>
+          <div class="sk-circle8 sk-circle"></div>
+          <div class="sk-circle9 sk-circle"></div>
+          <div class="sk-circle10 sk-circle"></div>
+          <div class="sk-circle11 sk-circle"></div>
+          <div class="sk-circle12 sk-circle"></div>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal -->
     <div class="modal fade" id="modal-sign" tabindex="-1" role="dialog" aria-hidden="true">
@@ -121,7 +141,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-basic">Sign</button>
+            <button type="button" class="btn btn-basic" id="btn-sign">Sign</button>
           </div>
         </div>
       </div>
@@ -135,12 +155,17 @@
     <script src="/javascripts/subtleCrypto.js"></script>
     <script>
       $(document).ready(function() {
-        let sign = false;
+        const userName = '<%= userName %>';
+        let signature = null;
+        let publicKey = null;
 
         // Create pair key
         $('#btn-create-key').on('click', async function() {
+          $('.loading-cover').removeClass("hidden");
           await generateKey();
-          await exportKey();
+          await exportPrivateKey();
+          publicKey = await exportPublicKey();
+          $('.loading-cover').addClass("hidden");
         });
 
         // Upload pair key
@@ -149,25 +174,32 @@
         });
 
         // Sign button event
-        $('#btn-sign').on('click', function() {
-
+        $('#btn-sign').on('click', async function() {
+          console.log(userName);
+          signature = await createSignature(userName);
+          console.log(signature);
+          $('#modal-sign').modal('hide');
         });
 
         // Next button event
-        $('#btn-next').on('click', function() {
-          if (sign) {
-            const agreement = {
-              "1": $('#check-agreement-1').is(':checked'),
-              "2": $('#check-agreement-2').is(':checked'),
-              "3": $('#check-agreement-3').is(':checked'),
-            }
+        $('#btn-register').on('click', function() {
+          if (signature !== null) {
+            const data = {
+              agreement: {
+                "1": $('#check-agreement-1').is(':checked'),
+                "2": $('#check-agreement-2').is(':checked'),
+                "3": $('#check-agreement-3').is(':checked'),
+              },
+              signature: signature,
+              publicKey: publicKey
+            };
 
             $.ajax({
               type: "POST",
-              url: "/check/agreement",
-              data: "agreement="+JSON.stringify(agreement),
+              url: "/register",
+              data: "data="+JSON.stringify(data),
               success: function() {
-                location.href = "/register/step2";
+                location.href = "/login";
               }
             });
           } else {
