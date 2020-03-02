@@ -30,10 +30,10 @@ async function exportPublicKey() {
         console.error("[Error]\nNot found key to Export.");
     } else {
         const publicKeyName = Date.now() + "_publicKey.pem";
-        const exported_pub_data = await basicExport("public", encryptKey.publicKey);
-        let keyFormat = `-----BEGIN PUBLIC KEY-----\n${exported_pub_data}\n-----END PUBLIC KEY-----`;
+        let exported_pub_data = await basicExport("public", encryptKey.publicKey);
+        let keyFormat = `-----BEGIN CERTIFICATE-----\n${exported_pub_data}\n-----END CERTIFICATE-----`;
         await downloadKey(keyFormat, "publicKey.pem");
-
+        // Format 설정
         return {name: publicKeyName, data: keyFormat};
     }
 }
@@ -102,7 +102,17 @@ async function basicExport(type, key) {
 
     const convertedKey = await window.crypto.subtle.exportKey(format, key);
     const exportKeyString = String.fromCharCode.apply(null, new Uint8Array(convertedKey));
-    return window.btoa(exportKeyString);
+    // return window.btoa(exportKeyString);
+    const encBase64 = window.btoa(exportKeyString);
+
+    let c = "";
+    for (let i=0; i<encBase64.length; i++) {
+        c += encBase64[i];
+        if ((i+1) !== 1 && (i+1)%64 === 0) {
+            c += "\r\n";
+        }
+    }
+    return c;
 }
 
 /* Unwrapping key */

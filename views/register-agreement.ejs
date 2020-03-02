@@ -51,33 +51,16 @@
               <p class="mb-5 main-color-3-f">Sign in to your account to continue.</p>
             </div>
             <div class="form-group">
+            <% for (let i=0; i<agreementList.length; i++) { %>
               <div class="form-group">
                 <div class="form-check abc-checkbox abc-checkbox-primary">
-                  <input class="form-check-input" id="check-agreement-1" type="checkbox">
-                  <label class="form-check-label" for="check-agreement-1">Agreement 1</label>
+                  <% const id = "check-agreement-"+(i+1); %>
+                  <input class="form-check-input" id="<%= id %>" type="checkbox" value="<%= agreementList[i].clause %>">
+                  <label class="form-check-label" for="<%= id %>">"<%= agreementList[i].principle %>" 에 대해 동의합니다.</label>
                 </div>
-                <div class="form-agreement">
-                  주식회사 카카오(이하 ‘회사’)가 제공하는 서비스를 이용해 주셔서 감사합니다. 회사는 여러분이 회사가 제공하는 다양한 인터넷과 모바일 서비스(카카오 서비스, Daum 서비스, 멜론 서비스 등을 의미하며 이하 해당 서비스들을 모두 합하여 “통합서비스” 또는 “서비스”라 함)에 더 가깝고 편리하게 다가갈 수 있도록 ‘카카오 통합서비스약관’(이하 ‘본 약관’)을 마련하였습니다. 여러분은 본 약관에 동의함으로써 통합서비스에 가입하여 통합서비스를 이용할 수 있습니다. 단, 여러분은 회사가 아닌 계열사를 포함한 제3자가 제공하는 서비스 (예: ㈜카카오모빌리티가 제공하는 카카오 T 택시 서비스)에 가입되지는 않으며, 회사가 제공하는 유료서비스 (예: 멜론 유료서비스)의 경우 여러분이 별도의 유료이용약관에 대한 동의한 때에 회사와 여러분 간의 유료서비스 이용계약이 성립합니다. 본 약관은 여러분이 통합서비스를 이용하는 데 필요한 권리, 의무 및 책임사항, 이용조건 및 절차 등 기본적인 사항을 규정하고 있으므로 조금만 시간을 내서 주의 깊게 읽어주시기 바랍니다.
-                </div>
+                <div class="form-agreement"><%= agreementList[i].content %></div>
               </div>
-              <div class="form-group">
-                <div class="form-check abc-checkbox abc-checkbox-primary">
-                  <input class="form-check-input" id="check-agreement-2" type="checkbox">
-                  <label class="form-check-label" for="check-agreement-2">Agreement 2</label>
-                </div>
-                <div class="form-agreement">
-                  주식회사 카카오(이하 ‘회사’)가 제공하는 서비스를 이용해 주셔서 감사합니다. 회사는 여러분이 회사가 제공하는 다양한 인터넷과 모바일 서비스(카카오 서비스, Daum 서비스, 멜론 서비스 등을 의미하며 이하 해당 서비스들을 모두 합하여 “통합서비스” 또는 “서비스”라 함)에 더 가깝고 편리하게 다가갈 수 있도록 ‘카카오 통합서비스약관’(이하 ‘본 약관’)을 마련하였습니다. 여러분은 본 약관에 동의함으로써 통합서비스에 가입하여 통합서비스를 이용할 수 있습니다. 단, 여러분은 회사가 아닌 계열사를 포함한 제3자가 제공하는 서비스 (예: ㈜카카오모빌리티가 제공하는 카카오 T 택시 서비스)에 가입되지는 않으며, 회사가 제공하는 유료서비스 (예: 멜론 유료서비스)의 경우 여러분이 별도의 유료이용약관에 대한 동의한 때에 회사와 여러분 간의 유료서비스 이용계약이 성립합니다. 본 약관은 여러분이 통합서비스를 이용하는 데 필요한 권리, 의무 및 책임사항, 이용조건 및 절차 등 기본적인 사항을 규정하고 있으므로 조금만 시간을 내서 주의 깊게 읽어주시기 바랍니다.
-                </div>
-              </div>
-              <div class="form-group">
-                <div class="form-check abc-checkbox abc-checkbox-primary">
-                  <input class="form-check-input" id="check-agreement-3" type="checkbox">
-                  <label class="form-check-label" for="check-agreement-3">Agreement 3</label>
-                </div>
-                <div class="form-agreement">
-                  주식회사 카카오(이하 ‘회사’)가 제공하는 서비스를 이용해 주셔서 감사합니다. 회사는 여러분이 회사가 제공하는 다양한 인터넷과 모바일 서비스(카카오 서비스, Daum 서비스, 멜론 서비스 등을 의미하며 이하 해당 서비스들을 모두 합하여 “통합서비스” 또는 “서비스”라 함)에 더 가깝고 편리하게 다가갈 수 있도록 ‘카카오 통합서비스약관’(이하 ‘본 약관’)을 마련하였습니다. 여러분은 본 약관에 동의함으로써 통합서비스에 가입하여 통합서비스를 이용할 수 있습니다. 단, 여러분은 회사가 아닌 계열사를 포함한 제3자가 제공하는 서비스 (예: ㈜카카오모빌리티가 제공하는 카카오 T 택시 서비스)에 가입되지는 않으며, 회사가 제공하는 유료서비스 (예: 멜론 유료서비스)의 경우 여러분이 별도의 유료이용약관에 대한 동의한 때에 회사와 여러분 간의 유료서비스 이용계약이 성립합니다. 본 약관은 여러분이 통합서비스를 이용하는 데 필요한 권리, 의무 및 책임사항, 이용조건 및 절차 등 기본적인 사항을 규정하고 있으므로 조금만 시간을 내서 주의 깊게 읽어주시기 바랍니다.
-                </div>
-              </div>
+            <% } %>
             </div>
             <div class="row form-group">
               <div class="col-lg-6">
@@ -161,6 +144,7 @@
 
         // Create pair key
         $('#btn-create-key').on('click', async function() {
+          $('.loading-message').text("Pair Key 생성 중입니다.");
           $('.loading-cover').removeClass("hidden");
           await generateKey();
           await exportPrivateKey();
@@ -175,31 +159,39 @@
 
         // Sign button event
         $('#btn-sign').on('click', async function() {
-          console.log(userName);
           signature = await createSignature(userName);
-          console.log(signature);
           $('#modal-sign').modal('hide');
         });
 
         // Next button event
         $('#btn-register').on('click', function() {
           if (signature !== null) {
+            $('.loading-message').text("이용 약관 동의 내역을 저장하기 위해 블록을 생성 중입니다.");
+            $('.loading-cover').removeClass("hidden");
+
             const data = {
-              agreement: {
-                "1": $('#check-agreement-1').is(':checked'),
-                "2": $('#check-agreement-2').is(':checked'),
-                "3": $('#check-agreement-3').is(':checked'),
-              },
+              agreement: [],
               signature: signature,
               publicKey: publicKey
             };
 
+            // 동의 내역을 객체에 저장
+            $('.form-check-input').each(function() {
+              data.agreement.push($(this).is(":checked"));
+            });
+
             $.ajax({
               type: "POST",
               url: "/register",
-              data: "data="+JSON.stringify(data),
-              success: function() {
-                location.href = "/login";
+              data: "data="+encodeURIComponent(JSON.stringify(data)),
+              success: function(res) {
+                if (res.result) {
+                  $('.loading-cover').addClass("hidden");
+                  alert("회원가입이 완료되었습니다.\r\n[Block Num]: " + res.info.blockID + "\r\n[TxId]: " + res.info.txID + "\r\n[b_key]: " + res.info.b_key + "\r\n\r\n* 암호화된 동의 내역은 Block Num 또는 TxId를 이용하여 조회가능하며, B_key를 이용하여 복호화할 수 있습니다.");
+                  location.href = "/login";
+                } else {
+                  alert("[Error]\r\n" + res.message);
+                }
               }
             });
           } else {

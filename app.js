@@ -4,10 +4,8 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const logger = require('morgan');
-
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
-
 const app = express();
 // set session
 app.use(session({
@@ -15,7 +13,6 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');

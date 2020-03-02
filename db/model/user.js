@@ -49,6 +49,21 @@ module.exports = {
     },
 
     /**/
+    saveBlockInfo: async function(uuid, blockInfo) {
+        try {
+            const insertQ = 'insert into block_info(user_id, block_num, tx_id) values (' + uuid + ', ' + blockInfo.blockID + ', "' + blockInfo.txID + '");';
+            const saveBlockInfoResult = await db.asyncQuery(insertQ);
+            if (saveBlockInfoResult.result) {
+                const insertQ = 'insert into enc_key(block_info_id, b_key) values (' + saveBlockInfoResult.message.insertId + ', "' + blockInfo.b_key + '");';
+                return await db.asyncQuery(insertQ);
+            } else {
+                return saveBlockInfoResult;
+            }
+        } catch (err) {
+            return err;
+        }
+    },
+
     searchBlockId: async function(uuid) {
         try {
             const selectQ = 'select block_id from block_info where user_id='+uuid+';';
