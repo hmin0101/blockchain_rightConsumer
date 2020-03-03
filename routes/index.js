@@ -39,7 +39,7 @@ router.get('/', function(req, res, next) {
 /* GET home page. */
 router.get('/home', function(req, res) {
   if (req.session.user !== null && req.session.user !== undefined) {
-    res.render('main-user');
+    res.render('confirm-saveInfo');
   } else {
     res.redirect('/login');
   }
@@ -57,8 +57,7 @@ router.get('/login', function(req, res) {
 router.post('/login', async function(req, res) {
   const info = JSON.parse(req.body.info);
   const result = await queryUser.login(info.id);
-  if (result.result) {
-    console.log(result.message);
+  if (result.result && result.message.length > 0) {
     const compare = await bcrypt.compareSync(info.pw, result.message[0].password);
     if (compare) {
       req.session.user = {
@@ -198,13 +197,14 @@ router.post('/register', async function(req, res) {
       // Insert Block Info in Database
       await queryUser.saveBlockInfo(registerResult.message.insertId, req.session.temp.block);
 
-      // // Encrypt Block Info
-      // const publicKey = fs.readFileSync(path.join(__dirname, "../public/key/", req.session.temp.publicKey.name));
-      // const buf = Buffer.from(JSON.stringify(req.session.temp.block));
-      // const encrypted = crypto.publicEncrypt(publicKey, buf);
+      // Encrypt Block Info
       const encrypted = encryptPublicKey(req.session.temp.publicKey.name, JSON.stringify(req.session.temp.block));
+      await res.json({result: true, encrypted: encrypted});
 
-      await res.json({result: true, info: req.session.temp.block});
+      // Destroy Session
+      req.session.destroy();
+      // Block 정보 저장
+      req.session.encryptedInfo = encrypted;
     } else {
       await res.json({result: false, message: "블록 생성에 실패하였습니다."});
     }
@@ -231,51 +231,36 @@ router.post('/register/fail', function(req, res) {
   res.json({result: false});
 });
 
-// router.post('/register/wait', function(req, res) {
-//   if (req.session.temp !== null && req.session.temp !== undefined) {
-//     while(req.session.temp.wait) {
-//       console.log(req.session.temp.wait);
-//     }
-//     console.log(req.session.temp.block);
-//     res.json({result: true});
-//   } else {
-//     res.json({result: false});
-//   }
-// });
-
-router.post('/test/key', function(req, res) {
-  const data = JSON.parse(req.body.data);
-  // public key 데이터의 @ 를 + 로 재변환
-  const reConverted = data.publicKey.data.replace(/@/g, "+");
-  // Save in Session
-  req.session.temp.publicKey = {
-    name: data.publicKey.name,
-    data: reConverted
-  };
-
-  const publicKey = {
-    name: data.publicKey.name,
-    data: decodeURIComponent(data.publicKey.data)
-  };
-
-  const filePath = path.join(__dirname, "../public/key/", req.session.temp.publicKey.name);
-  fs.writeFileSync(filePath, publicKey.data);
-
-  const spublicKey = fs.readFileSync(path.join(__dirname, "../public/key/", req.session.temp.publicKey.name), "base64");
-  console.log(spublicKey.toString());
-});
-
 // Search Agreement
 router.post('/search/agreement', async function(req, res) {
   // block key를 받아오고
   // 블록체인에서 찾을 block ID값을 조회
   const result = await queryUser.searchBlockId(req.session.user.uuid);
-  if (result.result) {
-    const blockID = result.message[0].block_id;
+  console.log(result);
+  if (result.result && result.message.length > 0) {
+    const blockInfo = {
+      blockNum: result.message[0].block_num,
+      txID: result.message[0].tx_id,
+      b_key: result.message[0].b_key
+    };
 
+    const searchPublicKeyResult = await queryUser.searchPublicKey(req.session.user.uuid);
+    if (searchPublicKeyResult && searchPublicKeyResult.message.length > 0) {
+      const encrypted = await encryptPublicKey("1583201477703_publicKey.pem", JSON.stringify(blockInfo));
+      await res.json({result: true, info: encrypted.toString("base64")});
+    } else {
+      await res.json({result: false, message: "등록된 Public Key가 없습니다.\r\n Key부터 등록해주세요."});
+    }
   } else {
     await res.json({result: false, message: "조회가능한 Block ID가 없습니다."});
   }
+});
+
+router.post('/test/key', async function(req, res) {
+  const data = JSON.parse(decodeURIComponent(req.body.data));
+  const result = await decryptPrivateKey(data.keyData, data.data);
+  console.log(result.toString());
+  await res.json({result: true});
 });
 
 function getDateStr() {
@@ -288,10 +273,15 @@ function encryptPublicKey(keyName, data) {
   const keyFile = fs.readFileSync(filePath, {encoding: "utf8"});
   const publicKey = crypto.createPublicKey(keyFile);
   const buf = Buffer.from(data);
-  console.log(filePath);
-  console.log(publicKey.toString());
 
-  return crypto.publicEncrypt(publicKey.toString(), buf);
+  return crypto.publicEncrypt(publicKey, buf);
+}
+
+async function decryptPrivateKey(keyData, data) {
+  const privateKey = crypto.createPrivateKey(keyData);
+  const buf = Buffer.from(data, "base64");
+
+  return crypto.privateDecrypt(privateKey, buf);
 }
 
 module.exports = router;

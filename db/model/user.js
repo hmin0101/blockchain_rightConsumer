@@ -66,9 +66,27 @@ module.exports = {
 
     searchBlockId: async function(uuid) {
         try {
-            const selectQ = 'select block_id from block_info where user_id='+uuid+';';
+            const selectQ = 'select a.block_num, a.tx_id, b.b_key from block_info as a inner join enc_key as b on a.block_info_id=b.block_info_id and a.user_id='+uuid+' order by a.create_date DESC limit 1;';
             return await db.asyncSelect(selectQ);
         } catch(err) {
+            return err;
+        }
+    },
+
+    searchPublicKey: async function(uuid) {
+        try {
+            const selectQ = 'select key_name from public_key where user_id='+uuid+' order by public_key_id DESC limit 1;';
+            return await db.asyncSelect(selectQ);
+        } catch(err) {
+            return err;
+        }
+    },
+
+    updatePublicKey: async function(uuid, keyName) {
+        try {
+            const updateQ = 'update public_key set key_name="' + keyName + '" where uuid=' + uuid + ';';
+            return await db.asyncQuery(updateQ);
+        } catch (err) {
             return err;
         }
     }
