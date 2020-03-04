@@ -75,6 +75,29 @@ body {
 .btn-link:hover {
   color: #0B7C99;
 }
+.btn-flex {
+  flex: 1;
+  margin: 0 10px;
+}
+.btn-flex:first-child {
+  margin-left: 15px;
+}
+.bt-flex:last-child {
+  margin-right: 15px;
+}
+.btn-basic-reverse {
+  background-color: #F9F9F9;
+  border: 1px solid #0F4C81;
+  color: #0B3199;
+  transition: background-color 0.3s;
+}
+.btn-basic-reverse:hover,
+.btn-basic-reverse:focus {
+  background-color: #FFFFFF;
+  border: 1px solid #0B3199;
+  color: #0A0B8F;
+  box-shadow: none;
+}
 
 .input-group .input-basic {
   width: auto;

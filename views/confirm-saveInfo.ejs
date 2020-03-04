@@ -19,10 +19,17 @@
         border-radius: 10px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 3px rgba(0, 0, 0, 0.2);
       }
-      .login-logo {
-        font-size: 83px;
-        font-weight: 300;
-        letter-spacing: -4px;
+
+      #form-result .info-subject {
+          font-size: 12px;
+          font-weight: 100;
+          margin-bottom: 2px;
+      }
+      #form-result .info-content {
+          font-size: 16px;
+          font-weight: 100;
+          color: #0B3199;
+          user-select: all;
       }
     </style>
   </head>
@@ -48,9 +55,10 @@
               <div class="form-group">
                 <div id="form-result" style="overflow-wrap: break-word"></div>
               </div>
-              <div class="form-group mb-0">
-                <button class="btn btn- btn-basic" id="btn-cancel">Cancel</button>
-                <button class="btn btn- btn-basic" id="btn-decrypt">Decrypt</button>
+              <div class="row form-group mb-0">
+                <button class="btn btn-flex btn-basic-reverse" id="btn-cancel">이전으로</button>
+                <button class="btn btn-flex btn-basic" id="btn-decrypt">Decrypt</button>
+                <button class="btn btn-flex btn-basic hidden" id="btn-move">조회</button>
                 <input class="hidden input-import-key" id="input-file" type="file" />
               </div>
             </div>
@@ -68,6 +76,7 @@
     <script>
       $(document).ready(function() {
         let encrypted = null;
+        let decryptStatus = false;
 
         // Search button click event
         $('#btn-search').on('click', function() {
@@ -89,7 +98,11 @@
 
         // Decrypt Button Event
         $('#btn-decrypt').on('click', function() {
-          $('#input-file').click();
+          if (!decryptStatus) {
+            $('#input-file').click();
+          } else {
+            alert("이미 데이터 복호화를 수행하였습니다.");
+          }
         });
 
         // Decrypt
@@ -98,16 +111,17 @@
             const reader = new FileReader();
             reader.readAsText(this.files[0]);
             reader.onload = async function() {
-              // $.ajax({
-              //   type: "POST",
-              //   url: "/test/key",
-              //   data: "data="+encodeURIComponent(JSON.stringify({keyData: reader.result, data: encrypted})),
-              // });
-
               await importPrivateKey(reader.result);
               const result = await decryptData(encrypted);
               if (result.result) {
-
+                decryptStatus = true;
+                const info = JSON.parse(result.message);
+                const html = '<div class="form-group mb-0"><p class="info-subject">Block Num: </p><p class="info-content">'+info.blockNum+'</p></div>'+
+                      '<div class="form-group mb-0"><p class="info-subject">Tx ID: </p><p class="info-content">'+info.txID+'</p></div>'+
+                      '<div class="form-group mb-0"><p class="info-subject">B_key: </p><p class="info-content">'+info.b_key+'</p></div>';
+                $('#form-result').html(html);
+                $('#form-decrypt .sub-title').html('입력한 <strong style="color: #E8A62C;">Private Key</strong>를 이용하여 복호화한 Block의 정보입니다.<br/>(더블 클릭 시, 클립보드에 복사됩니다.)');
+                $('#btn-move').removeClass("hidden");
               } else {
                   alert(result.message);
               }
@@ -119,9 +133,23 @@
 
         // Cancel Button Event
         $('#btn-cancel').on('click', function() {
-          encrypted = null;
-          $('#form-search').removeClass("hidden");
-          $('#form-decrypt').addClass("hidden");
+          if (confirm("이전 단계로 돌아가시겠습니까?")) {
+            encrypted = null;
+            decryptStatus = false;
+            $('#form-search').removeClass("hidden");
+            $('#form-decrypt').addClass("hidden");
+          }
+        });
+
+        // 복호화한 Block 정보에 대한 더블클릭 Event
+        $(document).on('dblclick', '#form-result .info-content', function(e) {
+          document.execCommand("copy");
+          alert("클립보드에 복사되었습니다.");
+        });
+
+        // 조회를 위해 Trust-Provider로 이동
+        $('#btn-move').on('click', function() {
+          window.open("http://52.79.182.164:3000/search", "Search Info", "toolbar=no, location=no, status=no, menubar=no, scrollbars=auto, resizable=no, directories=no, width=830, height=780");
         });
 
         // Logout
