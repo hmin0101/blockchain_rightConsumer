@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const randomString = require('randomstring');
 // const trustProvider = require('socket.io-client')("http://52.79.182.164:3000");
-const trustProvider = require('socket.io-client')("http://148.248.95.28:3000");
+const trustProvider = require('socket.io-client')("http://143.248.95.28:3000");
 // DB
 const queryUser = require('../db/model/user');
 const queryAgreement = require('../db/model/agreement');
