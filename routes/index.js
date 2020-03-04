@@ -200,7 +200,7 @@ router.post('/register', async function(req, res) {
 
       // Encrypt Block Info
       const encrypted = encryptPublicKey(req.session.temp.publicKey.name, JSON.stringify(req.session.temp.block));
-      await res.json({result: true, message: "회원가입 완료\r\n 로그인한 후, 동의 내역이 저장된 Block 정보를 조회할 수 있습니다."});
+      await res.json({result: true, message: "[회원가입 완료]\r\n로그인한 후, 동의 내역이 저장된 Block 정보를 조회할 수 있습니다."});
 
       // Destroy Session
       req.session.destroy();
@@ -245,7 +245,7 @@ router.post('/search/agreement', async function(req, res) {
 
     const searchPublicKeyResult = await queryUser.searchPublicKey(req.session.user.uuid);
     if (searchPublicKeyResult && searchPublicKeyResult.message.length > 0) {
-      const encrypted = await encryptPublicKey("1583201477703_publicKey.pem", JSON.stringify(blockInfo));
+      const encrypted = await encryptPublicKey(searchPublicKeyResult.message.key_name, JSON.stringify(blockInfo));
       await res.json({result: true, info: encrypted.toString("base64")});
     } else {
       await res.json({result: false, message: "등록된 Public Key가 없습니다.\r\n Key부터 등록해주세요."});
