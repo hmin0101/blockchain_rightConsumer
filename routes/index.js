@@ -245,7 +245,7 @@ router.post('/search/agreement', async function(req, res) {
 
     const searchPublicKeyResult = await queryUser.searchPublicKey(req.session.user.uuid);
     if (searchPublicKeyResult && searchPublicKeyResult.message.length > 0) {
-      const encrypted = await encryptPublicKey(searchPublicKeyResult.message.key_name, JSON.stringify(blockInfo));
+      const encrypted = await encryptPublicKey(searchPublicKeyResult.message[0].key_name, JSON.stringify(blockInfo));
       await res.json({result: true, info: encrypted.toString("base64")});
     } else {
       await res.json({result: false, message: "등록된 Public Key가 없습니다.\r\n Key부터 등록해주세요."});
