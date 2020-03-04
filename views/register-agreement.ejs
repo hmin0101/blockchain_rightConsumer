@@ -187,7 +187,7 @@
               success: function(res) {
                 if (res.result) {
                   $('.loading-cover').addClass("hidden");
-                  alert("회원가입이 완료되었습니다.\r\n[Block Num]: " + res.info.blockID + "\r\n[TxId]: " + res.info.txID + "\r\n[b_key]: " + res.info.b_key + "\r\n\r\n* 암호화된 동의 내역은 Block Num 또는 TxId를 이용하여 조회가능하며, B_key를 이용하여 복호화할 수 있습니다.");
+                  alert(res.message);
                   location.href = "/login";
                 } else {
                   alert("[Error]\r\n" + res.message);

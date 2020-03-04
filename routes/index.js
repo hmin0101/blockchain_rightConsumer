@@ -5,7 +5,8 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
 const randomString = require('randomstring');
-const trustProvider = require('socket.io-client')("http://52.79.182.164:3000");
+// const trustProvider = require('socket.io-client')("http://52.79.182.164:3000");
+const trustProvider = require('socket.io-client')("http://148.248.95.28:3000");
 // DB
 const queryUser = require('../db/model/user');
 const queryAgreement = require('../db/model/agreement');
@@ -199,12 +200,10 @@ router.post('/register', async function(req, res) {
 
       // Encrypt Block Info
       const encrypted = encryptPublicKey(req.session.temp.publicKey.name, JSON.stringify(req.session.temp.block));
-      await res.json({result: true, encrypted: encrypted});
+      await res.json({result: true, message: "회원가입 완료\r\n 로그인한 후, 동의 내역이 저장된 Block 정보를 조회할 수 있습니다."});
 
       // Destroy Session
       req.session.destroy();
-      // Block 정보 저장
-      req.session.encryptedInfo = encrypted;
     } else {
       await res.json({result: false, message: "블록 생성에 실패하였습니다."});
     }
