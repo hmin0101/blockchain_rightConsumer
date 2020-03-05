@@ -294,7 +294,7 @@ async function decryptPrivateKey(keyData, data) {
 }
 
 function sign() {
-    const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"));
+    const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"), {encoding: "utf8"});
     const privateKey = crypto.createPrivateKey(keyFile);
     const buf = Buffer.from(RIGHT_CONSUMER_NAME);
     const signature = crypto.createSign("aes256", buf, privateKey);
@@ -303,7 +303,7 @@ function sign() {
 }
 
 function verify(signature) {
-    const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"));
+    const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
     const publicKey = crypto.createPublicKey(keyFile);
     const buf = Buffer.from(RIGHT_CONSUMER_NAME, "base64");
 
