@@ -32,7 +32,7 @@ let agreementList = [];
 })();
 
  /* Root */
-router.get('/', function(req, res, next) {
+router.get('/', function(req, res) {
   if (req.session.user !== null && req.session.user !== undefined) {
     res.redirect('/home');
   } else {
@@ -265,8 +265,8 @@ router.post('/search/agreement', async function(req, res) {
 });
 
 router.get('/test/key', async function(req, res) {
-  const result = sign();
-  verify(result);
+  const signature = sign();
+  const result = verify(signature);
 
 
   res.send(result);
