@@ -188,7 +188,6 @@ router.post('/search/block/info', async function(req, res) {
   // block key를 받아오고
   // 블록체인에서 찾을 block ID값을 조회
   const result = await queryUser.searchBlockId(req.session.user.uuid);
-  console.log(result);
   if (result.result && result.message.length > 0) {
     const blockInfo = {
       blockNum: result.message[0].block_num,
@@ -244,7 +243,7 @@ router.post('/update/agreement', async function(req, res) {
 
       // Insert Block Info in Database
       await queryUser.updateBlockInfo(req.session.user.uuid, req.session.block);
-      await res.json({result: true, message: "[약관 동의 완료]\r\n 새롭게 갱신되어 동의 내역이 저장된 Block 정보를 조회할 수 있습니다."});
+      await res.json({result: true, message: "[약관 동의 완료]\r\n새롭게 갱신되어 동의 내역이 저장된 Block 정보를 조회할 수 있습니다."});
 
       // Destroy Session
       req.session.temp = null;
@@ -254,64 +253,71 @@ router.post('/update/agreement', async function(req, res) {
   });
 });
 
-router.get('/test/key', async function(req, res) {
-  const signature = sign();
-  const result = verify(signature);
-
-
-  res.send(result);
-});
+// router.get('/test/key', async function(req, res) {
+//   const signature = sign();
+//   const result = verify(signature);
+//
+//   res.send(result);
+// });
 
 /* 블록체인에 데이터를 저장하기 위해 암호화 작업을 진행 (스마트 컨트렉트 포맷에 맞춤) */
 async function encryptDataForSaveBlockchain(data, userId) {
-    // Create Object For Encrypt
-    const obj = {
-        user: {
-            id: userId,
-            agreement: {},
-            signature: data.signature
-        },
-        rightConsumer: {
-            name: RIGHT_CONSUMER_NAME,
-            signature: await sign()
-        }
-    };
-
-    // Match Agreement
-    for (let i=0; i<agreementList.length; i++) {
-        obj.user.agreement[i] = {
-            principle: agreementList[i].principle,
-            content: agreementList[i].content,
-            state: data.agreement[i]
-        };
+  // Create Object For Encrypt
+  const obj = {
+    user: {
+      id: userId,
+      agreement: {},
+      signature: data.signature
+    },
+    rightConsumer: {
+      name: RIGHT_CONSUMER_NAME,
+      signature: await sign()
     }
+  };
 
-    // Generate Random Block Key
-    const b_key = randomString.generate(15);
-    // Block Key 를 이용하여 데이터 암호화
-    const cipher = crypto.createCipher("aes192", b_key);
-    let encData = cipher.update(JSON.stringify(obj), "utf8", "base64");
-    encData += cipher.final("base64");
-
-    // Hash User Id
-    const hash = crypto.createHash("sha512");
-    hash.update(userId);
-    const hashed = hash.digest("base64");
-    // Create Object For Send
-    const sendData = {
-        userId: hashed,
-        rightConsumer: RIGHT_CONSUMER_NAME,
-        encryptedData: encData,
-        regTime: getDateStr()
+  // Match Agreement
+  for (let i=0; i<agreementList.length; i++) {
+    obj.user.agreement[i] = {
+      principle: agreementList[i].principle,
+      content: agreementList[i].content,
+      state: data.agreement[i]
     };
+  }
 
-    return { b_key: b_key, data: sendData };
+  // Generate Random Block Key
+  const b_key = randomString.generate(15);
+  // Block Key 를 이용하여 데이터 암호화
+  const cipher = crypto.createCipher("aes192", b_key);
+  let encData = cipher.update(JSON.stringify(obj), "utf8", "base64");
+  encData += cipher.final("base64");
+
+  // Search Prev Block Num
+  let prevBlockNum = null;
+  const result = await queryUser.searchBlockId(userId);
+  if (result.result && result.message.length > 0) {
+    prevBlockNum = result.message[0].block_num;
+  }
+
+  // Hash User Id
+  const hash = crypto.createHash("sha512");
+  hash.update(userId);
+  const hashed = hash.digest("base64");
+  // Create Object For Send
+  const sendData = {
+    userId: hashed,
+    rightConsumer: RIGHT_CONSUMER_NAME,
+    encryptedData: encData,
+    regTime: getDateStr(),
+    prevBlockNum: prevBlockNum
+  };
+
+  return { b_key: b_key, data: sendData };
 }
 
 /* Create Date String */
 function getDateStr() {
-    const date = new Date();
-    return date.getFullYear() + "-" + ((date.getMonth()+1) < 10 ? "0"+(date.getMonth()+1) : (date.getMonth()+1)) + "-" + (date.getDate() < 10 ? "0"+date.getDate() : date.getDate()) + " " + (date.getHours() < 10 ? "0"+date.getHours() : date.getHours()) + ":" + (date.getMinutes() < 10 ? "0"+date.getMinutes() : date.getMinutes());
+  const date = new Date();
+  return date.getFullYear() + "-" + ((date.getMonth()+1) < 10 ? "0"+(date.getMonth()+1) : (date.getMonth()+1)) + "-" + (date.getDate() < 10 ? "0"+date.getDate() : date.getDate()) + " " + (date.getHours() < 10 ? "0"+date.getHours() : date.getHours()) + ":" + (date.getMinutes() < 10 ? "0"+date.getMinutes() : date.getMinutes());
 }
 
 /* 사용자의 Public Key를 이용하여 B_key 및 Block 정보 암호화 */
@@ -333,22 +339,22 @@ async function decryptPrivateKey(keyData, data) {
 
 /* Create Right Consumer Signature */
 async function sign() {
-    const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"), {encoding: "utf8"});
-    const privateKey = crypto.createPrivateKey(keyFile);
+  const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"), {encoding: "utf8"});
+  const privateKey = crypto.createPrivateKey(keyFile);
 
-    const sign = crypto.createSign("sha512");
-    sign.update(RIGHT_CONSUMER_NAME);
-    return sign.sign(privateKey, "base64");
+  const sign = crypto.createSign("sha512");
+  sign.update(RIGHT_CONSUMER_NAME);
+  return sign.sign(privateKey, "base64");
 }
 
 /* Verify Right Consumer Signature */
 async function verify(signature) {
-    const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
-    const publicKey = crypto.createPublicKey(keyFile);
+  const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
+  const publicKey = crypto.createPublicKey(keyFile);
 
-    const verify = crypto.createVerify("sha512");
-    verify.update(RIGHT_CONSUMER_NAME);
-    return verify.verify(publicKey, signature, "base64");
+  const verify = crypto.createVerify("sha512");
+  verify.update(RIGHT_CONSUMER_NAME);
+  return verify.verify(publicKey, signature, "base64");
 }
 
 module.exports = router;
