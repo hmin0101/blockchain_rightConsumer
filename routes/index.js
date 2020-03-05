@@ -174,8 +174,13 @@ router.post('/register', async function(req, res) {
   let encData = cipher.update(JSON.stringify(obj), "utf8", "base64");
   encData += cipher.final("base64");
 
+  // Hash User Id
+  const hash = crypto.createHash("sha512");
+  hash.update(req.session.temp.id);
+  const hashed = hash.digest("base64");
+  // Create Object
   const sendData = {
-    userId: await bcrypt.hash(req.session.temp.id, 2),
+    userId: hashed,
     rightConsumer: "rightConsumer name",
     encryptedData: encData,
     regTime: getDateStr()
