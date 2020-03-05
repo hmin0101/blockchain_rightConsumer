@@ -10,7 +10,10 @@ const trustProvider = require('socket.io-client')("http://143.248.95.28:3000");
 // DB
 const queryUser = require('../db/model/user');
 const queryAgreement = require('../db/model/agreement');
-//
+
+const RIGHT_CONSUMER_NAME = "rightConsumer";
+
+// Init Agreement
 let agreementList = [];
 (async function initAgreement() {
   const result = await queryAgreement.list();
@@ -142,10 +145,11 @@ router.post('/register', async function(req, res) {
     name: data.publicKey.name,
     data: data.publicKey.data
   };
-  console.log("after");
-  console.log(req.session.temp.publicKey.data);
 
-  // Create Object
+  // Sign Right Consumer
+
+
+  // Create Object For Encrypt
   const obj = {
     user: {
       id: await bcrypt.hash(req.session.temp.id, 2),
@@ -153,7 +157,7 @@ router.post('/register', async function(req, res) {
       signature: data.signature
     },
     rightConsumer: {
-      name: "rightConsumer name",
+      name: RIGHT_CONSUMER_NAME,
       signature: "###"
     }
   };
@@ -178,7 +182,7 @@ router.post('/register', async function(req, res) {
   const hash = crypto.createHash("sha512");
   hash.update(req.session.temp.id);
   const hashed = hash.digest("base64");
-  // Create Object
+  // Create Object For Send
   const sendData = {
     userId: hashed,
     rightConsumer: "rightConsumer name",
@@ -260,11 +264,9 @@ router.post('/search/agreement', async function(req, res) {
   }
 });
 
-router.post('/test/key', async function(req, res) {
-  const data = JSON.parse(decodeURIComponent(req.body.data));
-  const result = await decryptPrivateKey(data.keyData, data.data);
-  console.log(result.toString());
-  await res.json({result: true});
+router.get('/test/key', async function(req, res) {
+  const result = sign();
+  res.send(result);
 });
 
 function getDateStr() {
@@ -286,6 +288,15 @@ async function decryptPrivateKey(keyData, data) {
   const buf = Buffer.from(data, "base64");
 
   return crypto.privateDecrypt(privateKey, buf);
+}
+
+function sign() {
+    const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"));
+    const privateKey = crypto.createPrivateKey(keyFile);
+    const buf = Buffer.from(RIGHT_CONSUMER_NAME);
+    const signature = crypto.createSign(null, buf, privateKey);
+    console.log(signature);
+    return signature;
 }
 
 module.exports = router;
