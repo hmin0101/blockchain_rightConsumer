@@ -266,7 +266,7 @@ router.post('/search/agreement', async function(req, res) {
 
 router.get('/test/key', async function(req, res) {
   const result = sign();
-  verify(result.toString("base64"));
+  verify(result);
 
 
   res.send(result);
@@ -296,19 +296,19 @@ async function decryptPrivateKey(keyData, data) {
 function sign() {
     const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"), {encoding: "utf8"});
     const privateKey = crypto.createPrivateKey(keyFile);
-    const buf = Buffer.from(RIGHT_CONSUMER_NAME);
-    const signature = crypto.createSign("aes256", buf, privateKey);
-    console.log(signature);
-    return signature;
+
+    const sign = crypto.createSign("sha512");
+    sign.update(RIGHT_CONSUMER_NAME);
+    return sign.sign(privateKey, "base64");
 }
 
 function verify(signature) {
     const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
     const publicKey = crypto.createPublicKey(keyFile);
-    const buf = Buffer.from(RIGHT_CONSUMER_NAME, "base64");
 
-    const result = crypto.createVerify("aes256", buf, publicKey, signature);
-    console.log(result);
+    const verify = crypto.createVerify("sha512");
+    verify.update(RIGHT_CONSUMER_NAME);
+    return verify.verify(publicKey, signature, "base64");
 }
 
 module.exports = router;
