@@ -248,7 +248,7 @@ router.post('/search/block/info', async function(req, res) {
 router.post('/create/metadata', function(req, res) {
   // Hash User Id
   const hash = crypto.createHash("sha512");
-  hash.update(req.session.temp.id);
+  hash.update(req.session.user.id);
   const hashed = hash.digest("base64");
 
   res.json({ result: true, url: TRUST_PROVIDER_IP+"/search/rc", user: hashed, rightConsumer: RIGHT_CONSUMER_NAME });
