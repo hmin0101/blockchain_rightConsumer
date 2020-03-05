@@ -92,7 +92,7 @@ module.exports = {
             if (type === "uuid") {
                 selectQ = 'select a.block_num, a.tx_id, b.b_key from block_info as a inner join enc_key as b on a.block_info_id=b.block_info_id and a.user_id='+id+' order by a.create_date DESC limit 1;';
             } else {
-                selectQ = 'select b.block_num, b.tx_id, c.b_key from user as a inner join block_info as b on a.user_id=b.user_id and a.id=' + id + ' inner join enc_key as c on b.block_info_id=c.block_info_id order by b.create_date DESC limit 1;';
+                selectQ = 'select b.block_num, b.tx_id, c.b_key from user as a inner join block_info as b on a.user_id=b.user_id and a.id="' + id + '" inner join enc_key as c on b.block_info_id=c.block_info_id order by b.create_date DESC limit 1;';
             }
             return await db.asyncSelect(selectQ);
         } catch(err) {
