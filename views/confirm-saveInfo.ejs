@@ -82,7 +82,7 @@
         $('#btn-search').on('click', function() {
           $.ajax({
             type: "POST",
-            url: "/search//block/info",
+            url: "/search/block/info",
             success: function(res) {
               if (res) {
                 encrypted = res.info;
