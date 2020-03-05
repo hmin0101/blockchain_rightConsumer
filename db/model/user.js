@@ -53,6 +53,7 @@ module.exports = {
         try {
             const insertQ = 'insert into block_info(user_id, block_num, tx_id) values (' + uuid + ', ' + blockInfo.blockID + ', "' + blockInfo.txID + '");';
             const saveBlockInfoResult = await db.asyncQuery(insertQ);
+            console.log(saveBlockInfoResult);
             if (saveBlockInfoResult.result) {
                 const insertQ = 'insert into enc_key(block_info_id, b_key) values (' + saveBlockInfoResult.message.insertId + ', "' + blockInfo.b_key + '");';
                 return await db.asyncQuery(insertQ);
