@@ -187,7 +187,7 @@ router.post('/register', async function(req, res) {
 router.post('/search/block/info', async function(req, res) {
   // block key를 받아오고
   // 블록체인에서 찾을 block ID값을 조회
-  const result = await queryUser.searchBlockId(req.session.user.uuid);
+  const result = await queryUser.searchBlockId("uuid", req.session.user.uuid);
   if (result.result && result.message.length > 0) {
     const blockInfo = {
       blockNum: result.message[0].block_num,
@@ -293,7 +293,8 @@ async function encryptDataForSaveBlockchain(data, userId) {
 
   // Search Prev Block Num
   let prevBlockNum = "None";
-  const result = await queryUser.searchBlockId(userId);
+  const result = await queryUser.searchBlockId("userId", userId);
+  console.log(result);
   if (result.result && result.message.length > 0) {
     prevBlockNum = result.message[0].block_num;
   }
