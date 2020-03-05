@@ -70,6 +70,22 @@ module.exports = {
         }
     },
 
+    updateBlockInfo: async function(uuid, blockInfo) {
+        try {
+            const insertQ = 'insert into block_info(user_id, block_num, tx_id) values (' + uuid + ', ' + blockInfo.blockID + ', "' + blockInfo.txID + '");';
+            const saveBlockInfoResult = await db.asyncQuery(insertQ);
+            console.log(saveBlockInfoResult);
+            if (saveBlockInfoResult.result) {
+                const insertQ = 'insert into enc_key(block_info_id, b_key) values (' + saveBlockInfoResult.message.insertId + ', "' + blockInfo.b_key + '");';
+                return await db.asyncQuery(insertQ);
+            } else {
+                return saveBlockInfoResult;
+            }
+        } catch (err) {
+            return err;
+        }
+    },
+
     searchBlockId: async function(uuid) {
         try {
             const selectQ = 'select a.block_num, a.tx_id, b.b_key from block_info as a inner join enc_key as b on a.block_info_id=b.block_info_id and a.user_id='+uuid+' order by a.create_date DESC limit 1;';

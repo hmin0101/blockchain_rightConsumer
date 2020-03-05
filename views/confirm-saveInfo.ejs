@@ -5,6 +5,8 @@
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
 
     <!--  Bootstrap 4.3.1  -->
+    <link rel="stylesheet" href="/stylesheets/font-awesome/css/font-awesome.css">
+    <!--  Bootstrap 4.3.1  -->
     <link rel="stylesheet" href="/stylesheets/bootstrap-4.3.1.min.css">
     <!--  Custom CSS  -->
     <link rel='stylesheet' href='/stylesheets/style.css' />
@@ -21,20 +23,51 @@
       }
 
       #form-result .info-subject {
-          font-size: 12px;
-          font-weight: 100;
-          margin-bottom: 2px;
+        font-size: 12px;
+        font-weight: 100;
+        margin-bottom: 2px;
       }
       #form-result .info-content {
-          font-size: 16px;
-          font-weight: 100;
-          color: #0B3199;
-          user-select: all;
+        font-size: 16px;
+        font-weight: 100;
+        color: #0B3199;
+        user-select: all;
+      }
+
+      .top-nav {
+        position: absolute;
+        display: flex;
+        flex-direction: row-reverse;
+        width: 100%;
+      }
+      .top-menu {
+        display: flex;
+        list-style: none;
+        margin: 0 0;
+        padding: 10px;
+      }
+      .top-menu .menu-item {
+        color: #373737;
+        font-size: 21px;
+        margin: 0 10px;
+        transition: color 0.3s;
+      }
+      .top-menu .menu-item:hover {
+        color: #939393;
+      }
+      .top-menu .menu-item a {
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
     <section>
+      <div class="nav top-nav">
+        <ul class="top-menu">
+          <li class="menu-item"><a id="btn-update"><i class="fa fa-bell-o"></i></a></li>
+          <li class="menu-item"><a id="btn-sign-out"><i class="fa fa-sign-out"></i></a></li>
+        </ul>
+      </div>
       <div class="container">
         <div class="row align-items-center justify-content-center flex-wrap" style="min-height: 95vh;">
           <div class="row col-lg-12 align-items-center justify-content-center" style="height: 100%">
@@ -159,7 +192,7 @@
         });
 
         // Logout
-        $('#btn-logout').on('click', function() {
+        $('#btn-sign-out').on('click', function() {
           $.ajax({
             type: 'POST',
             url: "/logout",
@@ -167,6 +200,11 @@
               location.href = "/login";
             }
           });
+        });
+
+        // Test update
+        $('#btn-update').on('click', function() {
+          location.href = "/update/agreement";
         });
 
       });

@@ -56,6 +56,7 @@ async function basicExport(type, key) {
 /* Import Private Key For Decrypt */
 async function importPrivateKey(keyFile) {
     encryptKey.privateKey = await importKey("private", keyFile, "decrypt");
+    signKey.privateKey = await importKey("private", keyFile, "sign");
 }
 
 /* Basic Import */
@@ -134,7 +135,7 @@ function downloadKey(data, fileName) {
 
 /* Sign */
 async function createSignature(name) {
-    if (signKey.publicKey === null) {
+    if (signKey.privateKey === null) {
         alert("[Error]\nNot found key for sign.");
     } else {
         const enc_data = new TextEncoder().encode(name);

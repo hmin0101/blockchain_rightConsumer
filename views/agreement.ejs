@@ -42,7 +42,7 @@
     </style>
   </head>
   <body>
-    <section>
+    <section id="main-page" data-type="<%= type %>">
       <div class="container">
         <div class="row align-items-center justify-content-center min-vh-100">
           <div class="col-lg-8 py-5">
@@ -117,8 +117,9 @@
             </div>
             <div class="col-lg-6">
               <div class="row justify-content-center">
-                <p class="mb-1 block text-center">Pair Key가 있는 경우</p>
+                <p class="mb-1 block text-center">생성 했던 Pair Key가 있는 경우</p>
                 <button type="button" class="btn btn-sm btn-basic" id="btn-upload-key">Upload Key</button>
+                <input class="hidden" id="input-key" type="file" />
               </div>
             </div>
           </div>
@@ -138,6 +139,7 @@
     <script src="/javascripts/subtleCrypto.js"></script>
     <script>
       $(document).ready(function() {
+        const pageType = $('#main-page').data("type");
         const userName = '<%= userName %>';
         let signature = null;
         let publicKey = null;
@@ -154,7 +156,15 @@
 
         // Upload pair key
         $('#btn-upload-key').on('click', function() {
+          $('#input-key').click();
+        });
 
+        $('#input-key').on('change', function() {
+          const reader = new FileReader();
+          reader.readAsText(this.files[0]);
+          reader.onload = async function() {
+            await importPrivateKey(reader.result);
+          };
         });
 
         // Sign button event
@@ -180,20 +190,37 @@
               data.agreement.push($(this).is(":checked"));
             });
 
-            $.ajax({
-              type: "POST",
-              url: "/register",
-              data: "data="+encodeURIComponent(JSON.stringify(data)),
-              success: function(res) {
-                if (res.result) {
-                  $('.loading-cover').addClass("hidden");
-                  alert(res.message);
-                  location.href = "/login";
-                } else {
-                  alert("[Error]\r\n" + res.message);
+            if (pageType === "register") {
+              $.ajax({
+                type: "POST",
+                url: "/register",
+                data: "data="+encodeURIComponent(JSON.stringify(data)),
+                success: function(res) {
+                  if (res.result) {
+                    $('.loading-cover').addClass("hidden");
+                    alert(res.message);
+                    location.href = "/login";
+                  } else {
+                    alert("[Error]\r\n" + res.message);
+                  }
                 }
-              }
-            });
+              });
+            } else {
+              $.ajax({
+                type: "POST",
+                url: "/update/agreement",
+                data: "data="+encodeURIComponent(JSON.stringify(data)),
+                success: function(res) {
+                  if (res.result) {
+                    $('.loading-cover').addClass("hidden");
+                    alert(res.message);
+                    location.href = "/";
+                  } else {
+                    alert("[Error]\r\n" + res.message);
+                  }
+                }
+              });
+            }
           } else {
             alert("Private Key를 이용하여 동의에 대한 Sign을 해주세요.");
           }

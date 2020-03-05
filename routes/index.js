@@ -93,7 +93,7 @@ router.post('/logout', function(req, res) {
 /* Register Page */
 router.get('/register', function(req, res) {
   if (req.session.user !== null && req.session.user !== undefined) {
-
+    res.redirect('/');
   } else {
     res.render('register');
   }
@@ -101,7 +101,7 @@ router.get('/register', function(req, res) {
 
 router.get('/register/step1', function(req, res) {
   if (req.session.user !== null && req.session.user !== undefined) {
-
+    res.redirect('/');
   } else {
     res.render('register');
   }
@@ -111,7 +111,7 @@ router.get('/register/step2', function(req, res) {
   if (req.session.temp === null || req.session.temp === undefined) {
     res.redirect('/register/step1');
   } else {
-    res.render('register-agreement', {userName: req.session.temp.name, agreementList: agreementList});
+    res.render('agreement', { type: "register", userName: req.session.temp.name, agreementList: agreementList });
   }
 });
 
@@ -149,46 +149,10 @@ router.post('/register', async function(req, res) {
     data: data.publicKey.data
   };
 
-  // Create Object For Encrypt
-  const obj = {
-    user: {
-      id: req.session.temp.id,
-      agreement: {},
-      signature: data.signature
-    },
-    rightConsumer: {
-      name: RIGHT_CONSUMER_NAME,
-      signature: await sign()
-    }
-  };
-  // Match Agreement
-  for (let i=0; i<agreementList.length; i++) {
-    obj.user.agreement[i] = {
-      principle: agreementList[i].principle,
-      content: agreementList[i].content,
-      state: data.agreement[i]
-    };
-  }
-
-  // Generate Random Block Key
+  // Create Encrypted Data
+  const encrypted = await encryptDataForSaveBlockchain(data, req.session.temp.id);
   req.session.temp.block = {};
-  req.session.temp.block.b_key = randomString.generate(15);
-  // Block Key 를 이용하여 데이터 암호화
-  const cipher = crypto.createCipher("aes192", req.session.temp.block.b_key);
-  let encData = cipher.update(JSON.stringify(obj), "utf8", "base64");
-  encData += cipher.final("base64");
-
-  // Hash User Id
-  const hash = crypto.createHash("sha512");
-  hash.update(req.session.temp.id);
-  const hashed = hash.digest("base64");
-  // Create Object For Send
-  const sendData = {
-    userId: hashed,
-    rightConsumer: RIGHT_CONSUMER_NAME,
-    encryptedData: encData,
-    regTime: getDateStr()
-  };
+  req.session.temp.block.b_key = encrypted.b_key;
 
   // Save User Public Key
   fs.writeFile(path.join(__dirname, "../public/key/", req.session.temp.publicKey.name), req.session.temp.publicKey.data, function(err) {
@@ -196,7 +160,7 @@ router.post('/register', async function(req, res) {
   });
 
   // 블록체인에 저장하기 위해서 암호화한 데이터를 Trust-Provider 로 송신
-  trustProvider.emit("register", sendData);
+  trustProvider.emit("register", encrypted.data);
   trustProvider.on("register", async function(result) {
     if (result) {
       req.session.temp.block.blockID = result.blockNum;
@@ -212,7 +176,7 @@ router.post('/register', async function(req, res) {
       await res.json({result: true, message: "[회원가입 완료]\r\n로그인한 후, 동의 내역이 저장된 Block 정보를 조회할 수 있습니다."});
 
       // Destroy Session
-      req.session.destroy();
+      req.session.temp = null;
     } else {
       await res.json({result: false, message: "블록 생성에 실패하였습니다."});
     }
@@ -244,7 +208,7 @@ router.post('/search/block/info', async function(req, res) {
   }
 });
 
-// Block 조회를 위해 Trust Provider 에게 제공할 정보를 생성
+/* Block 조회를 위해 Trust Provider 에게 제공할 정보를 생성 */
 router.post('/create/metadata', function(req, res) {
   // Hash User Id
   const hash = crypto.createHash("sha512");
@@ -252,6 +216,42 @@ router.post('/create/metadata', function(req, res) {
   const hashed = hash.digest("base64");
 
   res.json(TRUST_PROVIDER_IP+"/search/rc?rc=" + encodeURIComponent(RIGHT_CONSUMER_NAME) + "&user=" + encodeURIComponent(hashed));
+});
+
+/* Update Page */
+router.get('/update/agreement', function(req, res) {
+  if (req.session.user === null || req.session.user === undefined) {
+    res.redirect('/login');
+  } else {
+    res.render('agreement', { type: "update", userName: req.session.user.name, agreementList: agreementList });
+  }
+});
+
+router.post('/update/agreement', async function(req, res) {
+  const data = JSON.parse(decodeURIComponent(req.body.data));
+
+  // Create Encrypted Data
+  const encrypted = await encryptDataForSaveBlockchain(data, req.session.user.id);
+  req.session.block = {};
+  req.session.block.b_key = encrypted.b_key;
+
+  // 블록체인에 저장하기 위해서 암호화한 데이터를 Trust-Provider 로 송신
+  trustProvider.emit("register", encrypted.data);
+  trustProvider.on("register", async function(result) {
+    if (result) {
+      req.session.block.blockID = result.blockNum;
+      req.session.block.txID = result.txId;
+
+      // Insert Block Info in Database
+      await queryUser.updateBlockInfo(req.session.user.uuid, req.session.block);
+      await res.json({result: true, message: "[약관 동의 완료]\r\n 새롭게 갱신되어 동의 내역이 저장된 Block 정보를 조회할 수 있습니다."});
+
+      // Destroy Session
+      req.session.temp = null;
+    } else {
+      await res.json({result: false, message: "블록 생성에 실패하였습니다."});
+    }
+  });
 });
 
 router.get('/test/key', async function(req, res) {
@@ -262,11 +262,59 @@ router.get('/test/key', async function(req, res) {
   res.send(result);
 });
 
-function getDateStr() {
-  const date = new Date();
-  return date.getFullYear() + "-" + ((date.getMonth()+1) < 10 ? "0"+(date.getMonth()+1) : (date.getMonth()+1)) + "-" + (date.getDate() < 10 ? "0"+date.getDate() : date.getDate()) + " " + (date.getHours() < 10 ? "0"+date.getHours() : date.getHours()) + ":" + (date.getMinutes() < 10 ? "0"+date.getMinutes() : date.getMinutes());
+/* 블록체인에 데이터를 저장하기 위해 암호화 작업을 진행 (스마트 컨트렉트 포맷에 맞춤) */
+async function encryptDataForSaveBlockchain(data, userId) {
+    // Create Object For Encrypt
+    const obj = {
+        user: {
+            id: userId,
+            agreement: {},
+            signature: data.signature
+        },
+        rightConsumer: {
+            name: RIGHT_CONSUMER_NAME,
+            signature: await sign()
+        }
+    };
+
+    // Match Agreement
+    for (let i=0; i<agreementList.length; i++) {
+        obj.user.agreement[i] = {
+            principle: agreementList[i].principle,
+            content: agreementList[i].content,
+            state: data.agreement[i]
+        };
+    }
+
+    // Generate Random Block Key
+    const b_key = randomString.generate(15);
+    // Block Key 를 이용하여 데이터 암호화
+    const cipher = crypto.createCipher("aes192", b_key);
+    let encData = cipher.update(JSON.stringify(obj), "utf8", "base64");
+    encData += cipher.final("base64");
+
+    // Hash User Id
+    const hash = crypto.createHash("sha512");
+    hash.update(userId);
+    const hashed = hash.digest("base64");
+    // Create Object For Send
+    const sendData = {
+        userId: hashed,
+        rightConsumer: RIGHT_CONSUMER_NAME,
+        encryptedData: encData,
+        regTime: getDateStr()
+    };
+
+    return { b_key: b_key, data: sendData };
 }
 
+/* Create Date String */
+function getDateStr() {
+    const date = new Date();
+    return date.getFullYear() + "-" + ((date.getMonth()+1) < 10 ? "0"+(date.getMonth()+1) : (date.getMonth()+1)) + "-" + (date.getDate() < 10 ? "0"+date.getDate() : date.getDate()) + " " + (date.getHours() < 10 ? "0"+date.getHours() : date.getHours()) + ":" + (date.getMinutes() < 10 ? "0"+date.getMinutes() : date.getMinutes());
+}
+
+/* 사용자의 Public Key를 이용하여 B_key 및 Block 정보 암호화 */
 function encryptPublicKey(keyName, data) {
   const filePath = path.join(__dirname, "../public/key/", keyName);
   const keyFile = fs.readFileSync(filePath, {encoding: "utf8"});
@@ -283,6 +331,7 @@ async function decryptPrivateKey(keyData, data) {
   return crypto.privateDecrypt(privateKey, buf);
 }
 
+/* Create Right Consumer Signature */
 async function sign() {
     const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"), {encoding: "utf8"});
     const privateKey = crypto.createPrivateKey(keyFile);
@@ -292,6 +341,7 @@ async function sign() {
     return sign.sign(privateKey, "base64");
 }
 
+/* Verify Right Consumer Signature */
 async function verify(signature) {
     const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
     const publicKey = crypto.createPublicKey(keyFile);
