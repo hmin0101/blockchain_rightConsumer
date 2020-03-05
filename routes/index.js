@@ -292,7 +292,7 @@ async function encryptDataForSaveBlockchain(data, userId) {
   encData += cipher.final("base64");
 
   // Search Prev Block Num
-  let prevBlockNum = null;
+  let prevBlockNum = "None";
   const result = await queryUser.searchBlockId(userId);
   if (result.result && result.message.length > 0) {
     prevBlockNum = result.message[0].block_num;
