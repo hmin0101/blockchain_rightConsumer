@@ -251,7 +251,7 @@ router.post('/create/metadata', function(req, res) {
   hash.update(req.session.user.id);
   const hashed = hash.digest("base64");
 
-  res.json({ result: true, url: TRUST_PROVIDER_IP+"/search/rc", user: hashed, rightConsumer: RIGHT_CONSUMER_NAME });
+  res.json(TRUST_PROVIDER_IP+"/search/rc?rc=" + encodeURIComponent(RIGHT_CONSUMER_NAME) + "&user=" + encodeURIComponent(hashed));
 });
 
 router.get('/test/key', async function(req, res) {

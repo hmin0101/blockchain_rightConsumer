@@ -153,8 +153,7 @@
             type: "POST",
             url: "/create/metadata",
             success: function(res) {
-              const url = res.url + "?rc=" + res.rightConsumer + "&user=" + res.user;
-              window.open(url, "Search Info", "toolbar=no, location=no, status=no, menubar=no, scrollbars=auto, resizable=no, directories=no, width=830, height=780");
+              window.open(res, "Search Info", "toolbar=no, location=no, status=no, menubar=no, scrollbars=auto, resizable=no, directories=no, width=830, height=780");
             }
           });
         });
