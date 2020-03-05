@@ -6,12 +6,15 @@ const fs = require('fs');
 const path = require('path');
 const randomString = require('randomstring');
 // const trustProvider = require('socket.io-client')("http://52.79.182.164:3000");
-const trustProvider = require('socket.io-client')("http://143.248.95.28:3000");
+const io = require('socket.io-client');
 // DB
 const queryUser = require('../db/model/user');
 const queryAgreement = require('../db/model/agreement');
 
 const RIGHT_CONSUMER_NAME = "rightConsumer";
+const TRUST_PROVIDER_IP = "http://143.248.95.28:3000";
+// Socket.io-client
+const trustProvider = io(TRUST_PROVIDER_IP);
 
 // Init Agreement
 let agreementList = [];
@@ -146,19 +149,16 @@ router.post('/register', async function(req, res) {
     data: data.publicKey.data
   };
 
-  // Sign Right Consumer
-
-
   // Create Object For Encrypt
   const obj = {
     user: {
-      id: await bcrypt.hash(req.session.temp.id, 2),
+      id: req.session.temp.id,
       agreement: {},
       signature: data.signature
     },
     rightConsumer: {
       name: RIGHT_CONSUMER_NAME,
-      signature: "###"
+      signature: await sign()
     }
   };
   // Match Agreement
@@ -185,7 +185,7 @@ router.post('/register', async function(req, res) {
   // Create Object For Send
   const sendData = {
     userId: hashed,
-    rightConsumer: "rightConsumer name",
+    rightConsumer: RIGHT_CONSUMER_NAME,
     encryptedData: encData,
     regTime: getDateStr()
   };
@@ -216,31 +216,11 @@ router.post('/register', async function(req, res) {
     } else {
       await res.json({result: false, message: "블록 생성에 실패하였습니다."});
     }
-
-    // Destroy Session
-    // req.session.destroy();
   });
-
-  // 저장 결과 확인 후, Block Info 저장 (Info 저장 후, Block Key 저장)
-
-
-  // const decipher = crypto.createDecipher("aes192", b_key);
-  // let result2 = decipher.update(result, "base64", "utf8");
-  // result2 += decipher.final("utf8");
-  // console.log("복호화: ");
-  // console.log(result2);
-});
-
-router.post('/register/process', async function(req, res) {
-
-});
-
-router.post('/register/fail', function(req, res) {
-  res.json({result: false});
 });
 
 // Search Agreement
-router.post('/search/agreement', async function(req, res) {
+router.post('/search/block/info', async function(req, res) {
   // block key를 받아오고
   // 블록체인에서 찾을 block ID값을 조회
   const result = await queryUser.searchBlockId(req.session.user.uuid);
@@ -255,13 +235,23 @@ router.post('/search/agreement', async function(req, res) {
     const searchPublicKeyResult = await queryUser.searchPublicKey(req.session.user.uuid);
     if (searchPublicKeyResult && searchPublicKeyResult.message.length > 0) {
       const encrypted = await encryptPublicKey(searchPublicKeyResult.message[0].key_name, JSON.stringify(blockInfo));
-      await res.json({result: true, info: encrypted.toString("base64")});
+      await res.json({ result: true, info: encrypted.toString("base64") });
     } else {
-      await res.json({result: false, message: "등록된 Public Key가 없습니다.\r\n Key부터 등록해주세요."});
+      await res.json({ result: false, message: "등록된 Public Key가 없습니다.\r\n Key부터 등록해주세요." });
     }
   } else {
-    await res.json({result: false, message: "조회가능한 Block ID가 없습니다."});
+    await res.json({ result: false, message: "조회가능한 Block ID가 없습니다." });
   }
+});
+
+// Block 조회를 위해 Trust Provider 에게 제공할 정보를 생성
+router.post('/create/metadata', function(req, res) {
+  // Hash User Id
+  const hash = crypto.createHash("sha512");
+  hash.update(req.session.temp.id);
+  const hashed = hash.digest("base64");
+
+  res.json({ result: true, url: TRUST_PROVIDER_IP+"/search/rc", user: hashed, rightConsumer: RIGHT_CONSUMER_NAME });
 });
 
 router.get('/test/key', async function(req, res) {
@@ -293,7 +283,7 @@ async function decryptPrivateKey(keyData, data) {
   return crypto.privateDecrypt(privateKey, buf);
 }
 
-function sign() {
+async function sign() {
     const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"), {encoding: "utf8"});
     const privateKey = crypto.createPrivateKey(keyFile);
 
@@ -302,7 +292,7 @@ function sign() {
     return sign.sign(privateKey, "base64");
 }
 
-function verify(signature) {
+async function verify(signature) {
     const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
     const publicKey = crypto.createPublicKey(keyFile);
 

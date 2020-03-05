@@ -142,14 +142,21 @@
         });
 
         // 복호화한 Block 정보에 대한 더블클릭 Event
-        $(document).on('dblclick', '#form-result .info-content', function(e) {
+        $(document).on('dblclick', '#form-result .info-content', function() {
           document.execCommand("copy");
           alert("클립보드에 복사되었습니다.");
         });
 
         // 조회를 위해 Trust-Provider로 이동
         $('#btn-move').on('click', function() {
-          window.open("http://143.248.95.28:3000/search", "Search Info", "toolbar=no, location=no, status=no, menubar=no, scrollbars=auto, resizable=no, directories=no, width=830, height=780");
+          $.ajax({
+            type: "POST",
+            url: "/create/metadata",
+            success: function(res) {
+              const url = res.url + "?rc=" + res.rightConsumer + "&user=" + res.user;
+              window.open(url, "Search Info", "toolbar=no, location=no, status=no, menubar=no, scrollbars=auto, resizable=no, directories=no, width=830, height=780");
+            }
+          });
         });
 
         // Logout
@@ -157,7 +164,7 @@
           $.ajax({
             type: 'POST',
             url: "/logout",
-            success: function(res) {
+            success: function() {
               location.href = "/login";
             }
           });
