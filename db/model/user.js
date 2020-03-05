@@ -29,7 +29,12 @@ module.exports = {
             console.log(insert_user_R);
             if (insert_user_R.result) {
                 const insert_key_Q = 'insert into public_key(user_id, key_name) values (' + insert_user_R.message.insertId + ', "' + keyName + '");';
-                return await db.asyncQuery(insert_key_Q);
+                const insert_key_R = await db.asyncQuery(insert_key_Q);
+                if (insert_key_R.result) {
+                    return {result: true, insertId: insert_user_R.message.insertId};
+                } else {
+                    return insert_key_R;
+                }
             } else {
                 return insert_user_R;
             }

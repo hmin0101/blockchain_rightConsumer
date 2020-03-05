@@ -196,7 +196,7 @@ router.post('/register', async function(req, res) {
       // Insert User Data in Database
       const registerResult = await queryUser.register(req.session.temp, req.session.temp.publicKey.name);
       // Insert Block Info in Database
-      await queryUser.saveBlockInfo(registerResult.message.insertId, req.session.temp.block);
+      await queryUser.saveBlockInfo(registerResult.insertId, req.session.temp.block);
 
       // // Encrypt Block Info
       // const encrypted = encryptPublicKey(req.session.temp.publicKey.name, JSON.stringify(req.session.temp.block));
