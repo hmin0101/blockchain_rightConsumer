@@ -50,7 +50,7 @@
               <h3 class="register-logo mb-2 main-color-6-f">Register</h3>
               <p class="mb-5 main-color-3-f">Sign in to your account to continue.</p>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-4">
             <% for (let i=0; i<agreementList.length; i++) { %>
               <div class="form-group form-terms">
                 <div class="form-check abc-checkbox abc-checkbox-primary">
@@ -69,9 +69,6 @@
               <div class="col-lg-6">
                 <button class="btn btn-block btn-basic" id="btn-register" data-toggle="modal" data-target="#modal-sign">Register</button>
               </div>
-            </div>
-            <div class="text-center">
-              <a class="btn-link" id="btn-signin" href="/login">sign in</a>
             </div>
           </div>
         </div>
@@ -148,8 +145,10 @@
           $('.loading-message').text("Pair Key 생성 중입니다.");
           $('.loading-cover').removeClass("hidden");
           await generateKey();
-          await exportPrivateKey();
           publicKey = await exportPublicKey();
+          setTimeout(function() {
+              exportPrivateKey();
+          }, 500);
           $('.loading-cover').addClass("hidden");
         });
 
