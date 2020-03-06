@@ -20,7 +20,7 @@
         letter-spacing: -5px;
       }
 
-      .form-agreement {
+      .terms-content {
         max-height: 200px;
         padding: 12px 20px;
         background-color: #f2f9fa;
@@ -29,13 +29,13 @@
         font-size: 13px;
         overflow-y: auto;
       }
-      .form-agreement::-webkit-scrollbar {
+      .terms-content::-webkit-scrollbar {
         width: 6px;
       }
-      .form-agreement::-webkit-scrollbar-track {
+      .terms-content::-webkit-scrollbar-track {
         background: #f1f3f1;
       }
-      .form-agreement::-webkit-scrollbar-thumb {
+      .terms-content::-webkit-scrollbar-thumb {
         background: #34558B;
         border-radius: 3px;
       }
@@ -52,13 +52,13 @@
             </div>
             <div class="form-group">
             <% for (let i=0; i<agreementList.length; i++) { %>
-              <div class="form-group">
+              <div class="form-group form-terms">
                 <div class="form-check abc-checkbox abc-checkbox-primary">
                   <% const id = "check-agreement-"+(i+1); %>
                   <input class="form-check-input" id="<%= id %>" type="checkbox" value="<%= agreementList[i].clause %>">
                   <label class="form-check-label" for="<%= id %>">"<%= agreementList[i].principle %>" 에 대해 동의합니다.</label>
                 </div>
-                <div class="form-agreement"><%= agreementList[i].content %></div>
+                <div class="terms-content"><%= agreementList[i].content %></div>
               </div>
             <% } %>
             </div>
@@ -169,7 +169,24 @@
 
         // Sign button event
         $('#btn-sign').on('click', async function() {
-          signature = await createSignature(userName);
+          let index = 0;
+          const agreeState = {};
+          // 동의 내역을 객체에 저장
+          $('.form-terms').each(function() {
+            agreeState[index] = {
+              principal: $(this).find('.form-check-label').text(),
+              content: $(this).find('.terms-content').text(),
+              state: $(this).find('.form-check-input').is(":checked")
+            }
+          });
+
+          console.log(agreeState);
+          
+          // $.ajax({
+          //
+          // })
+
+          // signature = await createSignature(userName);
           $('#modal-sign').modal('hide');
         });
 
@@ -185,10 +202,7 @@
               publicKey: publicKey
             };
 
-            // 동의 내역을 객체에 저장
-            $('.form-check-input').each(function() {
-              data.agreement.push($(this).is(":checked"));
-            });
+
 
             if (pageType === "register") {
               $.ajax({
@@ -225,6 +239,7 @@
             alert("Private Key를 이용하여 동의에 대한 Sign을 해주세요.");
           }
         });
+
       });
     </script>
   </body>
