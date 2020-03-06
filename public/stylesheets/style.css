@@ -126,6 +126,10 @@ body {
 .input-group .input-group-append:focus {
   background-color: #0A0B8F;
 }
+.form-check-label,
+.form-check-label * {
+  font-size: 12px;
+}
 
 /* Loading Cover */
 .loading-cover {

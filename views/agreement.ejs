@@ -53,7 +53,7 @@
             <div class="form-group mb-4">
             <% for (let i=0; i<agreementList.length; i++) { %>
               <div class="form-group form-terms">
-                <div class="form-check abc-checkbox abc-checkbox-primary">
+                <div class="form-check abc-checkbox abc-checkbox-primary mb-1">
                   <% const id = "check-agreement-"+(i+1); %>
                   <input class="form-check-input" id="<%= id %>" type="checkbox" value="<%= agreementList[i].clause %>">
                   <label class="form-check-label" for="<%= id %>">"<span class="principal"><%= agreementList[i].principle %></span>" 에 대해 동의합니다.</label>
