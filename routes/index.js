@@ -12,7 +12,7 @@ const queryUser = require('../db/model/user');
 const queryAgreement = require('../db/model/agreement');
 
 const RIGHT_CONSUMER_NAME = "rightConsumer";
-const TRUST_PROVIDER_IP = "http://143.248.95.28:3000";
+const TRUST_PROVIDER_IP = "http://www.trust-provider.org";
 // Socket.io-client
 const trustProvider = io(TRUST_PROVIDER_IP);
 
