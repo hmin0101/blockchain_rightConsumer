@@ -56,7 +56,7 @@
                 <div class="form-check abc-checkbox abc-checkbox-primary">
                   <% const id = "check-agreement-"+(i+1); %>
                   <input class="form-check-input" id="<%= id %>" type="checkbox" value="<%= agreementList[i].clause %>">
-                  <label class="form-check-label" for="<%= id %>">"<%= agreementList[i].principle %>" 에 대해 동의합니다.</label>
+                  <label class="form-check-label" for="<%= id %>">"<span class="principal">"<%= agreementList[i].principle %></span>" 에 대해 동의합니다.</label>
                 </div>
                 <div class="terms-content"><%= agreementList[i].content %></div>
               </div>
@@ -64,10 +64,10 @@
             </div>
             <div class="row form-group">
               <div class="col-lg-6">
-                <button class="btn btn-block btn-basic" data-toggle="modal" data-target="#modal-sign">Agreement Sign</button>
+                <button class="btn btn-block btn-basic-reverse" id="btn-back" onclick="history.back()">Back</button>
               </div>
               <div class="col-lg-6">
-                <button class="btn btn-block btn-basic" id="btn-register">Register</button>
+                <button class="btn btn-block btn-basic" id="btn-register" data-toggle="modal" data-target="#modal-sign">Register</button>
               </div>
             </div>
             <div class="text-center">
@@ -140,8 +140,7 @@
     <script>
       $(document).ready(function() {
         const pageType = $('#main-page').data("type");
-        const userName = '<%= userName %>';
-        let signature = null;
+        let agreement = { data: null, signature: null };
         let publicKey = null;
 
         // Create pair key
@@ -169,74 +168,61 @@
 
         // Sign button event
         $('#btn-sign').on('click', async function() {
+          $('.loading-message').text("이용 약관 동의 내역을 저장하기 위해 블록을 생성 중입니다.");
+          $('.loading-cover').removeClass("hidden");
+          $('#modal-sign').modal('hide');
+
+          // Signature Step
           let index = 0;
           const agreeState = {};
           // 동의 내역을 객체에 저장
           $('.form-terms').each(function() {
             agreeState[index] = {
-              principal: $(this).find('.form-check-label').text(),
+              principal: $(this).find('.principal').text(),
               content: $(this).find('.terms-content').text(),
               state: $(this).find('.form-check-input').is(":checked")
             }
+            index++;
           });
+          agreement.data = agreeState;
+          agreement.signature = await createSignature(JSON.stringify(agreement.data));
 
-          console.log(agreeState);
-          
-          // $.ajax({
-          //
-          // })
+          // Register Step
+          const data = {
+            agreement: agreement,
+            publicKey: publicKey
+          };
 
-          // signature = await createSignature(userName);
-          $('#modal-sign').modal('hide');
-        });
-
-        // Next button event
-        $('#btn-register').on('click', function() {
-          if (signature !== null) {
-            $('.loading-message').text("이용 약관 동의 내역을 저장하기 위해 블록을 생성 중입니다.");
-            $('.loading-cover').removeClass("hidden");
-
-            const data = {
-              agreement: [],
-              signature: signature,
-              publicKey: publicKey
-            };
-
-
-
-            if (pageType === "register") {
-              $.ajax({
-                type: "POST",
-                url: "/register",
-                data: "data="+encodeURIComponent(JSON.stringify(data)),
-                success: function(res) {
-                  if (res.result) {
-                    $('.loading-cover').addClass("hidden");
-                    alert(res.message);
-                    location.href = "/login";
-                  } else {
-                    alert("[Error]\r\n" + res.message);
-                  }
+          if (pageType === "register") {
+            $.ajax({
+              type: "POST",
+              url: "/register",
+              data: "data="+encodeURIComponent(JSON.stringify(data)),
+              success: function(res) {
+                if (res.result) {
+                  $('.loading-cover').addClass("hidden");
+                  alert(res.message);
+                  location.href = "/login";
+                } else {
+                  alert("[Error]\r\n" + res.message);
                 }
-              });
-            } else {
-              $.ajax({
-                type: "POST",
-                url: "/update/agreement",
-                data: "data="+encodeURIComponent(JSON.stringify(data)),
-                success: function(res) {
-                  if (res.result) {
-                    $('.loading-cover').addClass("hidden");
-                    alert(res.message);
-                    location.href = "/";
-                  } else {
-                    alert("[Error]\r\n" + res.message);
-                  }
-                }
-              });
-            }
+              }
+            });
           } else {
-            alert("Private Key를 이용하여 동의에 대한 Sign을 해주세요.");
+            $.ajax({
+              type: "POST",
+              url: "/update/agreement",
+              data: "data="+encodeURIComponent(JSON.stringify(data)),
+              success: function(res) {
+                if (res.result) {
+                  $('.loading-cover').addClass("hidden");
+                  alert(res.message);
+                  location.href = "/";
+                } else {
+                  alert("[Error]\r\n" + res.message);
+                }
+              }
+            });
           }
         });
 

@@ -150,7 +150,7 @@ router.post('/register', async function(req, res) {
   };
 
   // Create Encrypted Data
-  const encrypted = await encryptDataForSaveBlockchain("new", data, req.session.temp.id);
+  const encrypted = await encryptDataForSaveBlockchain("new", data, encodeURIComponent(data.publicKey.data), req.session.temp.id);
   req.session.temp.block = {};
   req.session.temp.block.b_key = encrypted.b_key;
 
@@ -228,9 +228,10 @@ router.get('/update/agreement', function(req, res) {
 
 router.post('/update/agreement', async function(req, res) {
   const data = JSON.parse(decodeURIComponent(req.body.data));
-
+  // Load Public Key
+  const publicKey = await searchPublicKey(req.session.user.uuid);
   // Create Encrypted Data
-  const encrypted = await encryptDataForSaveBlockchain("update", data, req.session.user.id);
+  const encrypted = await encryptDataForSaveBlockchain("update", data, publicKey, req.session.user.id);
 
   // 블록체인에 저장하기 위해서 암호화한 데이터를 Trust-Provider 로 송신
   trustProvider.emit("register", encrypted.data);
@@ -253,36 +254,42 @@ router.post('/update/agreement', async function(req, res) {
   });
 });
 
-// router.get('/test/key', async function(req, res) {
-//   const signature = sign();
-//   const result = verify(signature);
-//
-//   res.send(result);
-// });
+router.get('/test/key', async function(req, res) {
+    const filePath = path.join(__dirname, "../public/key/test_pub.pem");
+    const keyFile = fs.readFileSync(filePath, {encoding: "utf8"});
+    const publicKey = encodeURIComponent(keyFile.toString());
+    const bb = decodeURIComponent(publicKey);
+    console.log(publicKey);
+    console.log(bb);
+
+  res.send("OK");
+});
 
 /* 블록체인에 데이터를 저장하기 위해 암호화 작업을 진행 (스마트 컨트렉트 포맷에 맞춤) */
-async function encryptDataForSaveBlockchain(type, data, userId) {
+async function encryptDataForSaveBlockchain(type, data, pubKey, userId) {
+  // User로부터 받은 약관 동의 내역 및 User Signature
+  const userData = {
+    id: userId,
+    agreement: data.agreement.data,
+    signature: data.agreement.signature,
+    publicKey: pubKey
+  };
+  // Sign Right Consumer
+  const rightConsumerSignature = await sign(JSON.stringify(userData));
+
+  // Load Right Consumer Public Key
+  const filePath = path.join(__dirname, "../bin/keys/public.pem");
+  const keyFile = fs.readFileSync(filePath, {encoding: "utf8"});
+
   // Create Object For Encrypt
   const obj = {
-    user: {
-      id: userId,
-      agreement: {},
-      signature: data.signature
-    },
+    user: userData,
     rightConsumer: {
       name: RIGHT_CONSUMER_NAME,
-      signature: await sign()
+      signature: rightConsumerSignature,
+      publicKey: encodeURIComponent(keyFile.toString()),
     }
   };
-
-  // Match Agreement
-  for (let i=0; i<agreementList.length; i++) {
-    obj.user.agreement[i] = {
-      principle: agreementList[i].principle,
-      content: agreementList[i].content,
-      state: data.agreement[i]
-    };
-  }
 
   // 첫 약관 동의 내역 저장 여부에 따라 다르게 처리
   let b_key;
@@ -336,6 +343,18 @@ function encryptPublicKey(keyName, data) {
   return crypto.publicEncrypt(publicKey, buf);
 }
 
+/* User Public Key 검색 */
+async function searchPublicKey(uuid) {
+  const result = await queryUser.searchPublicKey(uuid);
+  if (result.result && result.message.length > 0) {
+      const filePath = path.join(__dirname, "../public/key/", result.message[0].key_name);
+      const keyFile = fs.readFileSync(filePath, {encoding: "utf8"});
+      return { result: true, message: encodeURIComponent(keyFile.toString()) };
+  } else {
+      return { result: false, message: "저장된 Public Key가 없습니다." };
+  }
+}
+
 async function decryptPrivateKey(keyData, data) {
   const privateKey = crypto.createPrivateKey(keyData);
   const buf = Buffer.from(data, "base64");
@@ -344,23 +363,23 @@ async function decryptPrivateKey(keyData, data) {
 }
 
 /* Create Right Consumer Signature */
-async function sign() {
+async function sign(inputString) {
   const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/private.pem"), {encoding: "utf8"});
   const privateKey = crypto.createPrivateKey(keyFile);
 
-  const sign = crypto.createSign("sha512");
-  sign.update(RIGHT_CONSUMER_NAME);
+  const sign = crypto.createSign("sha256");
+  sign.update(inputString);
   return sign.sign(privateKey, "base64");
 }
 
 /* Verify Right Consumer Signature */
-async function verify(signature) {
-  const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
-  const publicKey = crypto.createPublicKey(keyFile);
-
-  const verify = crypto.createVerify("sha512");
-  verify.update(RIGHT_CONSUMER_NAME);
-  return verify.verify(publicKey, signature, "base64");
-}
+// async function verify(signature) {
+//   const keyFile = fs.readFileSync(path.join(__dirname, "../bin/keys/public.pem"), {encoding: "utf8"});
+//   const publicKey = crypto.createPublicKey(keyFile);
+//
+//   const verify = crypto.createVerify("sha256");
+//   verify.update(RIGHT_CONSUMER_NAME);
+//   return verify.verify(publicKey, signature, "base64");
+// }
 
 module.exports = router;
