@@ -150,7 +150,7 @@ router.post('/register', async function(req, res) {
   };
 
   // Create Encrypted Data
-  const encrypted = await encryptDataForSaveBlockchain(data, req.session.temp.id);
+  const encrypted = await encryptDataForSaveBlockchain("new", data, req.session.temp.id);
   req.session.temp.block = {};
   req.session.temp.block.b_key = encrypted.b_key;
 
@@ -230,7 +230,7 @@ router.post('/update/agreement', async function(req, res) {
   const data = JSON.parse(decodeURIComponent(req.body.data));
 
   // Create Encrypted Data
-  const encrypted = await encryptDataForSaveBlockchain(data, req.session.user.id);
+  const encrypted = await encryptDataForSaveBlockchain("update", data, req.session.user.id);
 
   // 블록체인에 저장하기 위해서 암호화한 데이터를 Trust-Provider 로 송신
   trustProvider.emit("register", encrypted.data);
