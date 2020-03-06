@@ -167,7 +167,7 @@ router.post('/register', async function(req, res) {
       req.session.temp.block.txID = result.txId;
 
       // Insert User Data in Database
-      const registerResult = await queryUser.register(req.session.temp, req.session.temp.publicKey.name);
+      const registerResult = await queryUser.register(req.session.temp, req.session.temp.publicKey.name, req.session.temp.block.b_key);
       // Insert Block Info in Database
       await queryUser.saveBlockInfo(registerResult.insertId, req.session.temp.block);
 
@@ -231,15 +231,15 @@ router.post('/update/agreement', async function(req, res) {
 
   // Create Encrypted Data
   const encrypted = await encryptDataForSaveBlockchain(data, req.session.user.id);
-  req.session.block = {};
-  req.session.block.b_key = encrypted.b_key;
 
   // 블록체인에 저장하기 위해서 암호화한 데이터를 Trust-Provider 로 송신
   trustProvider.emit("register", encrypted.data);
   trustProvider.on("register", async function(result) {
     if (result) {
-      req.session.block.blockID = result.blockNum;
-      req.session.block.txID = result.txId;
+      req.session.block = {
+        blockID: result.blockNum,
+        txID: result.txId
+      };
 
       // Insert Block Info in Database
       await queryUser.updateBlockInfo(req.session.user.uuid, req.session.block);
@@ -261,7 +261,7 @@ router.post('/update/agreement', async function(req, res) {
 // });
 
 /* 블록체인에 데이터를 저장하기 위해 암호화 작업을 진행 (스마트 컨트렉트 포맷에 맞춤) */
-async function encryptDataForSaveBlockchain(data, userId) {
+async function encryptDataForSaveBlockchain(type, data, userId) {
   // Create Object For Encrypt
   const obj = {
     user: {
@@ -284,20 +284,25 @@ async function encryptDataForSaveBlockchain(data, userId) {
     };
   }
 
-  // Generate Random Block Key
-  const b_key = randomString.generate(15);
+  // 첫 약관 동의 내역 저장 여부에 따라 다르게 처리
+  let b_key;
+  let prevBlockNum = "None";
+  if (type === "new") {
+    // Generate Random Block Key
+    b_key = randomString.generate(15);
+  } else {
+    // Search Prev Block Num
+    const searchPrevBlockNum_R = await queryUser.searchBlockId("userId", userId);
+    if (searchPrevBlockNum_R.result && searchPrevBlockNum_R.message.length > 0) {
+      prevBlockNum = searchPrevBlockNum_R.message[0].block_num;
+      b_key = searchPrevBlockNum_R.message[0].b_key
+    }
+  }
+
   // Block Key 를 이용하여 데이터 암호화
   const cipher = crypto.createCipher("aes192", b_key);
   let encData = cipher.update(JSON.stringify(obj), "utf8", "base64");
   encData += cipher.final("base64");
-
-  // Search Prev Block Num
-  let prevBlockNum = "None";
-  const result = await queryUser.searchBlockId("userId", userId);
-  console.log(result);
-  if (result.result && result.message.length > 0) {
-    prevBlockNum = result.message[0].block_num;
-  }
 
   // Hash User Id
   const hash = crypto.createHash("sha512");
