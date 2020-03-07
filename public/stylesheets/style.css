@@ -131,6 +131,21 @@ body {
   font-size: 12px;
 }
 
+.hr-line-solid {
+    border-top: 1px solid #e7eaec;
+    color: #ffffff;
+    background-color: #ffffff;
+    height: 1px;
+    margin: 20px 0;
+}
+.hr-line-dashed {
+    border-top: 1px dashed #e7eaec;
+    color: #ffffff;
+    background-color: #ffffff;
+    height: 1px;
+    margin: 20px 0;
+}
+
 /* Loading Cover */
 .loading-cover {
   display: flex;
